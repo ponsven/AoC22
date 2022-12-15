@@ -1,4 +1,5 @@
 using StaticArrays
+using BenchmarkTools
 
 @enum DIRECTION R=1 L=2 U=3 D=4
 
@@ -60,28 +61,43 @@ end
 
 println("1: Number of vistied spots ", length(Thistory))
 
+
+function model_rope!(rope, directions, number, Thistory)
+    # Set head 
+    H = @view rope[1, :]
+    T = @view rope[end, :]
+
+    tmp = size(rope)
+    knots = tmp[1]
+    len = length(number)
+    for i in 1:len
+        for _ in 1:number[i]
+
+            move_head!(H, directions[i])
+            for j in 1:(knots-1)
+                T1 = @view rope[j, :] 
+                T2 = @view rope[j+1, :] 
+                if (tail_move(T2, T1)) move_tail!(T2, T1) end
+            end 
+            if !((T[1], T[2]) in Thistory) push!(Thistory, (T[1], T[2])) end
+        end 
+    end 
+end
+
+
+# rope = MMatrix{10, 2, Int}(undef)
+# fill!(rope, 0)
+# Thistory = Vector{Tuple{Int, Int}}()
+# @btime model_rope!($rope, $directions, $number, $Thistory)
+# 
+# rope = MMatrix{10, 2, Int}(undef)
+# fill!(rope, 0)
+# Thistory = Set{Tuple{Int,Int}}()
+# @btime model_rope!($rope, $directions, $number, $Thistory)
+
+
 rope = MMatrix{10, 2, Int}(undef)
 fill!(rope, 0)
-Thistory = Vector{Tuple{Int, Int}}()
-
-# Set head 
-H = @view rope[1, :]
-T = @view rope[end, :]
-
-tmp = size(rope)
-knots = tmp[1]
-len = length(number)
-for i in 1:len
-    for _ in 1:number[i]
-
-        move_head!(H, directions[i])
-        for j in 1:(knots-1)
-            T1 = @view rope[j, :] 
-            T2 = @view rope[j+1, :] 
-            if (tail_move(T2, T1)) move_tail!(T2, T1) end
-        end 
-        if !((T[1], T[2]) in Thistory) push!(Thistory, (T[1], T[2])) end
-    end 
-end 
-
+Thistory = Set{Tuple{Int,Int}}()
+model_rope!(rope, directions, number, Thistory)
 println("2: Number of vistied spots ", length(Thistory))
